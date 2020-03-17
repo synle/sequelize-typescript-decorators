@@ -112,7 +112,7 @@ export class User extends Model {
 ### Plumbing
 ```
 import { Sequelize } from 'sequelize';
-import * as SendbloomModels from './schema';
+import * as AllModelMaps from './schema';
 
 /**
  * this routine will initialize the database, please only run this once per all...
@@ -132,7 +132,7 @@ export default async () => {
     await sequelize.authenticate();
 
     // then hook up the initiation for all the models / schema
-    const models = Object.keys(SendbloomModels).map((modelName) => SendbloomModels[modelName]);
+    const models = Object.keys(AllModelMaps).map((modelName) => AllModelMaps[modelName]);
     // first create the models
     models.forEach((sourceModel) => {
       sourceModel.init(sourceModel.prototype.dbSchema, {
@@ -151,7 +151,7 @@ export default async () => {
         const { as, sourceKey, relationship, foreignModel, foreignKey } = association;
 
         // construct the relationship
-        sourceModel[relationship](SendbloomModels[foreignModel], {
+        sourceModel[relationship](AllModelMaps[foreignModel], {
           sourceKey,
           foreignKey,
           as,
@@ -163,4 +163,5 @@ export default async () => {
     process.exit(1); // exit the app if the connection failed...
   }
 };
+
 ```
