@@ -1,4 +1,14 @@
 # sequelize-typescript-decorators
+### TODO: 
+[] make this into a npm library
+
+
+This documents how I set up decorators and use them with sequelize (node JS ORM library) to reduce boilderplate
+
+### Credentials
+```
+DB_URL=mysql://root:StrongP@assword@127.0.0.1:3306/my_database
+```
 
 ### Decorator for table
 ```
@@ -11,11 +21,46 @@ function table(tableName: string) {
 
 
 ### Decorator for attribute
+#### Barebone method: no extra lib
 ```
 function attribute(model, tableAttributes: AttributeProperty) {
   model.prototype.dbSchema = model.prototype.dbSchema || {};
   return function(_target: any, name: string) {
     model.prototype.dbSchema[name] = tableAttributes;
+  };
+}
+```
+
+#### Auto inferred the type using `reflect-metadata`
+Note that this requires the use of `reflect-metadata` third party library
+```
+// library which adds a polyfill for an experimental metadata API, and requirement for some js decorators
+import 'reflect-metadata'; 
+
+function attribute(model, tableAttributes: AttributeProperty) {
+  model.prototype.dbSchema = model.prototype.dbSchema || {};
+  return function(target: any, key: string) {
+    // getting the type of the property (class member)
+    if (!tableAttributes.type) {
+      var propertyType = Reflect.getMetadata('design:type', target, key);
+      switch (propertyType.name) {
+        case 'Number':
+          tableAttributes.type = DataTypes.NUMBER;
+          break;
+        case 'Date':
+          tableAttributes.type = DataTypes.DATE;
+          break;
+        case 'Boolean':
+          tableAttributes.type = DataTypes.BOOLEAN;
+          break;
+        case 'String':
+          tableAttributes.type = DataTypes.STRING;
+          break;
+      }
+    }
+
+    // set the dbschema
+    model.prototype.dbSchema[key] = tableAttributes;
   };
 }
 ```
@@ -26,9 +71,9 @@ function attribute(model, tableAttributes: AttributeProperty) {
 function relationship(model, tableAssociation: AssociationProperty) {
   model.prototype.dbAssociations = model.prototype.dbAssociations || [];
   return function(_target: any, name: string) {
-    tableAssociation['sourceKey'] = tableAssociation['sourceKey'] || name;
-    tableAssociation['foreignKey'] = tableAssociation['foreignKey'] || 'id';
-    tableAssociation['as'] = tableAssociation['as'] || tableAssociation['foreignModel'];
+    tableAssociation.sourceKey = tableAssociation.sourceKey || name;
+    tableAssociation.foreignKey = tableAssociation.foreignKey || 'id';
+    tableAssociation.as = tableAssociation.as || tableAssociation.foreignModel;
     model.prototype.dbAssociations.push(tableAssociation);
   };
 }
@@ -71,7 +116,7 @@ enum AllModels {
   User = 'User',
 }
 
-@table('cordata_cordatauser')
+@table('users')
 export class User extends Model {
   @attribute(User, {
     type: DataTypes.INTEGER,
