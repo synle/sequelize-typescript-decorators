@@ -12,7 +12,7 @@ function table(tableName: string) {
 
 ### Decorator for attribute
 ```
-function attribute(model, tableAttributes: object) {
+function attribute(model, tableAttributes: AttributeProperty) {
   model.prototype.dbSchema = model.prototype.dbSchema || {};
   return function(_target: any, name: string) {
     model.prototype.dbSchema[name] = tableAttributes;
@@ -20,17 +20,56 @@ function attribute(model, tableAttributes: object) {
 }
 ```
 
-### Relationship enum
+
+### Decorator for relationship
+```
+function relationship(model, tableAssociation: AssociationProperty) {
+  model.prototype.dbAssociations = model.prototype.dbAssociations || [];
+  return function(_target: any, name: string) {
+    tableAssociation['sourceKey'] = tableAssociation['sourceKey'] || name;
+    tableAssociation['foreignKey'] = tableAssociation['foreignKey'] || 'id';
+    tableAssociation['as'] = tableAssociation['as'] || tableAssociation['foreignModel'];
+    model.prototype.dbAssociations.push(tableAssociation);
+  };
+}
+```
+
+### Relationship enum and other enums
 ```
 enum Relationship {
   hasOne = 'hasOne',
   hasMany = 'hasMany',
+}
+
+
+interface AttributeProperty{
+  type: any;
+  allowNull?: boolean;
+  primaryKey?: boolean;
+  autoIncrement?: boolean;
+  [propName: string]: any;
+}
+
+
+interface AssociationProperty{
+  relationship: string,
+  foreignModel: string,
+  sourceKey?: string,
+  foreignKey?: string,
+  as?: string;
+  [propName: string]: any;
 }
 ```
 
 ### Usage
 ```
 import { Sequelize, DataTypes, ModelAttributes, Model } from 'sequelize';
+
+
+enum AllModels {
+  SalesforceCredential = 'SalesforceCredential',
+  User = 'User',
+}
 
 @table('cordata_cordatauser')
 export class User extends Model {
@@ -39,6 +78,11 @@ export class User extends Model {
     allowNull: false,
     primaryKey: true,
     autoIncrement: true,
+  })
+  @relationship(User, {
+    relationship: Relationship.hasOne,
+    foreignModel: AllModels.SalesforceCredential,
+    foreignKey: 'user_id',
   })
   public id!: number;
 
@@ -62,19 +106,6 @@ export class User extends Model {
 
   // with association getter
   public readonly SalesforceCredential?: SalesforceCredential; // this is optional and only visible with includes
-
-  // set up association has or belong relationship
-  static getModelRelationships = () => {
-    return [
-      {
-        as: 'SalesforceCredential',
-        sourceKey: 'id',
-        relationship: Relationship.hasOne,
-        foreignModel: SalesforceCredential,
-        foreignKey: 'user_id',
-      },
-    ];
-  };
 }
 ```
 
@@ -83,6 +114,9 @@ export class User extends Model {
 import { Sequelize } from 'sequelize';
 import * as SendbloomModels from './schema';
 
+/**
+ * this routine will initialize the database, please only run this once per all...
+ */
 export default async () => {
   const dbConnectionString = process.env.DB_URL || '';
   const sequelize = new Sequelize(dbConnectionString, {
@@ -110,14 +144,14 @@ export default async () => {
     // then do the association
     models.forEach((sourceModel) => {
       // setup associations
-      const associations = sourceModel.getModelRelationships();
+      const associations = sourceModel.prototype.dbAssociations;
 
       // now here we do association
       associations.forEach((association) => {
         const { as, sourceKey, relationship, foreignModel, foreignKey } = association;
 
         // construct the relationship
-        sourceModel[relationship](foreignModel, {
+        sourceModel[relationship](SendbloomModels[foreignModel], {
           sourceKey,
           foreignKey,
           as,
