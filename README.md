@@ -20,6 +20,14 @@ function attribute(model, tableAttributes: object) {
 }
 ```
 
+### Relationship enum
+```
+enum Relationship {
+  hasOne = 'hasOne',
+  hasMany = 'hasMany',
+}
+```
+
 ### Usage
 ```
 import { Sequelize, DataTypes, ModelAttributes, Model } from 'sequelize';
