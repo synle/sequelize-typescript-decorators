@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata"); // library which adds a polyfill for an experimental metadata API, and requirement for some js decorators
 const sequelize_1 = require("sequelize");
@@ -60,8 +69,45 @@ exports.relationship = (model, tableAssociation) => {
     return function (_target, name) {
         tableAssociation.sourceKey = tableAssociation.sourceKey || name;
         tableAssociation.foreignKey = tableAssociation.foreignKey || "id";
-        tableAssociation.as = tableAssociation.as || tableAssociation.foreignModel;
+        tableAssociation.as =
+            tableAssociation.foreignModel["as"] || tableAssociation.as;
         model.prototype.dbAssociations.push(tableAssociation);
     };
 };
+/**
+ *
+ * @param sequelize connected sequelize instance
+ * @param models array of sequelize models
+ */
+exports.initDatabase = (sequelize, models) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield sequelize.authenticate();
+        // first create the models
+        models.forEach(sourceModel => {
+            sourceModel.init(sourceModel.prototype.dbSchema, {
+                tableName: sourceModel.prototype.dbTableName,
+                sequelize // sequelize instance - this bit is important
+            });
+        });
+        // then do the association
+        models.forEach(sourceModel => {
+            // setup associations
+            const associations = sourceModel.prototype.dbAssociations || [];
+            // now here we do association
+            associations.forEach(association => {
+                const { as, sourceKey, relationship, foreignModel, foreignKey } = association;
+                // construct the relationship
+                sourceModel[relationship](foreignModel, {
+                    sourceKey,
+                    foreignKey,
+                    as
+                });
+            });
+        });
+    }
+    catch (error) {
+        console.error("Unable to connect to the database:", error);
+        process.exit(1); // exit the app if the connection failed...
+    }
+});
 //# sourceMappingURL=index.js.map

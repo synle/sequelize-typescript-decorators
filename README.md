@@ -16,12 +16,11 @@ DB_URL=mysql://root:StrongP@assword@127.0.0.1:3306/my_database
 ### How to use
 #### Install it
 ```
-npm install --save synle/sequelize-typescript-decorators#v1.0.0
+npm install --save synle/sequelize-typescript-decorators#v2.0.0
 ```
 
 #### Then declare it in your model...
 ```
-import { DataTypes, Model } from 'sequelize';
 import {
   Relationship,
   table,
@@ -29,18 +28,14 @@ import {
   relationship,
 } from 'sequelize-typescript-decorators';
 
-
-@table('my_users')
+@table('my_user')
 export class User extends Model {
+  static as = 'User';
+
   @attribute(User, {
     allowNull: false,
     primaryKey: true,
     autoIncrement: true,
-  })
-  @relationship(User, {
-    relationship: Relationship.hasOne,
-    foreignModel: 'SalesforceCredential',
-    foreignKey: 'user_id',
   })
   public id!: number;
 
@@ -61,13 +56,12 @@ export class User extends Model {
 
   @attribute(User, {})
   public is_admin!: boolean;
-
-  // with association getter
-  public readonly SalesforceCredential?: SalesforceCredential;
 }
 
-@table('my_salesforcecredentials')
+@table('cordata_salesforcecredentials')
 export class SalesforceCredential extends Model {
+  static as = 'SalesforceCredential';
+
   @attribute(SalesforceCredential, {
     allowNull: false,
     primaryKey: true,
@@ -114,12 +108,12 @@ export class SalesforceCredential extends Model {
   @attribute(SalesforceCredential, { allowNull: false })
   @relationship(SalesforceCredential, {
     relationship: Relationship.hasOne,
-    foreignModel: AllModels.User,
+    foreignModel: User,
   })
   public user_id!: number;
 
   // with association getter
-  public readonly User?: User;
+  public readonly User?: User; // this is optional and only visible with includes
 }
 ```
 
@@ -129,6 +123,9 @@ Note that db credentials should be stored in `DB_URL` in this format
 `DB_URL=mysql://myuser:strongpassword@127.0.0.1:3306/my_db`
 ```
 import { Sequelize } from 'sequelize';
+import {
+  initDatabase,
+} from 'sequelize-typescript-decorators';
 import * as AllModelMaps from './schema';
 
 /**
@@ -145,42 +142,9 @@ export default async () => {
     },
   });
 
-  try {
-    await sequelize.authenticate();
-
-    // then hook up the initiation for all the models / schema
-    const models = Object.keys(AllModelMaps).map((modelName) => AllModelMaps[modelName]);
-    // first create the models
-    models.forEach((sourceModel) => {
-      sourceModel.init(sourceModel.prototype.dbSchema, {
-        tableName: sourceModel.prototype.dbTableName,
-        sequelize, // sequelize instance - this bit is important
-      });
-    });
-
-    // then do the association
-    models.forEach((sourceModel) => {
-      // setup associations
-      const associations = sourceModel.prototype.dbAssociations;
-
-      // now here we do association
-      associations.forEach((association) => {
-        const { as, sourceKey, relationship, foreignModel, foreignKey } = association;
-
-        // construct the relationship
-        sourceModel[relationship](AllModelMaps[foreignModel], {
-          sourceKey,
-          foreignKey,
-          as,
-        });
-      });
-    });
-  } catch (error) {
-    console.error('Unable to connect to the database:', dbConnectionString, error);
-    process.exit(1); // exit the app if the connection failed...
-  }
+  const models = Object.keys(AllModelMaps).map((modelName) => AllModelMaps[modelName]);
+  await(initDatabase(sequelize, models))
 };
-
 ```
 
 

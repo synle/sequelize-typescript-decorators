@@ -17,7 +17,7 @@ export interface AttributeProperty {
 }
 
 export interface AssociationProperty {
-  relationship: string;
+  relationship: Relationship;
   foreignModel: any;
   sourceKey?: string;
   foreignKey?: string;
@@ -79,7 +79,54 @@ export const relationship = (model, tableAssociation: AssociationProperty) => {
   return function(_target: any, name: string) {
     tableAssociation.sourceKey = tableAssociation.sourceKey || name;
     tableAssociation.foreignKey = tableAssociation.foreignKey || "id";
-    tableAssociation.as = tableAssociation.as || tableAssociation.foreignModel;
+    tableAssociation.as =
+      tableAssociation.foreignModel["as"] || tableAssociation.as;
     model.prototype.dbAssociations.push(tableAssociation);
   };
+};
+
+/**
+ *
+ * @param sequelize connected sequelize instance
+ * @param models array of sequelize models
+ */
+export const initDatabase = async (sequelize, models: Array<any>) => {
+  try {
+    await sequelize.authenticate();
+
+    // first create the models
+    models.forEach(sourceModel => {
+      sourceModel.init(sourceModel.prototype.dbSchema, {
+        tableName: sourceModel.prototype.dbTableName,
+        sequelize // sequelize instance - this bit is important
+      });
+    });
+
+    // then do the association
+    models.forEach(sourceModel => {
+      // setup associations
+      const associations = sourceModel.prototype.dbAssociations || [];
+
+      // now here we do association
+      associations.forEach(association => {
+        const {
+          as,
+          sourceKey,
+          relationship,
+          foreignModel,
+          foreignKey
+        } = association;
+
+        // construct the relationship
+        sourceModel[relationship](foreignModel, {
+          sourceKey,
+          foreignKey,
+          as
+        });
+      });
+    });
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+    process.exit(1); // exit the app if the connection failed...
+  }
 };
