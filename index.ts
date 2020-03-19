@@ -1,5 +1,5 @@
 import "reflect-metadata"; // library which adds a polyfill for an experimental metadata API, and requirement for some js decorators
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes, DataType } from "sequelize";
 
 export enum Relationship {
   hasOne = "hasOne",
@@ -9,7 +9,7 @@ export enum Relationship {
 }
 
 export interface AttributeProperty {
-  type?: any;
+  type?: DataType;
   allowNull?: boolean;
   primaryKey?: boolean;
   autoIncrement?: boolean;
