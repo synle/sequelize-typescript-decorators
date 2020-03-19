@@ -2,7 +2,7 @@
 This documents how I set up decorators and use them with sequelize (node JS ORM library) to reduce boilderplate
 
 ### TODO's
-- [ ] extract plumbing into a method and reuse it instead of having user of this library do it...
+- [X] extract plumbing into a method and reuse it instead of having user of this library do it...
 - [X] add support for other adapters: SQLITE, PG, etc...
 - [ ] deploy to npm modules instead of using github
 - [ ] integrate with CI pipeline to build stuffs automatically
@@ -153,6 +153,8 @@ Create PR against master.
 
 #### Note on release pipeline
 ```
-git tag v1.0.0
-git push origin v1.0.0
+version="$(cat package.json  | jq .version)" && \
+echo "version=$version"
+git tag $version && \
+git push origin $version
 ```
