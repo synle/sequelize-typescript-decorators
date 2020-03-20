@@ -4,7 +4,7 @@ This documents how I set up decorators and use them with sequelize (node JS ORM 
 ### TODO's
 - [X] extract plumbing into a method and reuse it instead of having user of this library do it...
 - [X] add support for other adapters: SQLITE, PG, etc...
-- [ ] deploy to npm modules instead of using github
+- [X] deploy to npm modules instead of using github
 - [ ] integrate with CI pipeline to build stuffs automatically
 
 ### Credentials
@@ -16,7 +16,11 @@ DB_URL=mysql://root:StrongP@assword@127.0.0.1:3306/my_database
 ### How to use
 #### Install it
 ```
-npm install --save synle/sequelize-typescript-decorators#v2.0.0
+# To Install from npm
+npm install --save sequelize-typescript-decorators
+
+# To install from github
+npm install --save synle/sequelize-typescript-decorators#v2.0.1
 ```
 
 #### Then declare it in your model...
@@ -58,7 +62,7 @@ export class User extends Model {
   public is_admin!: boolean;
 }
 
-@table('cordata_salesforcecredentials')
+@table('salesforcecredentials')
 export class SalesforceCredential extends Model {
   static as = 'SalesforceCredential';
 
@@ -153,8 +157,7 @@ Create PR against master.
 
 #### Note on release pipeline
 ```
-version="$(cat package.json  | jq .version)" && \
-echo "version=$version"
-git tag $version && \
+version="$(cat package.json  | jq .version)"
+git tag $version
 git push origin $version
 ```

@@ -13,6 +13,8 @@ export interface AttributeProperty {
   allowNull?: boolean;
   primaryKey?: boolean;
   autoIncrement?: boolean;
+  defaultValue?: any;
+  field?: string;
   [propName: string]: any;
 }
 
