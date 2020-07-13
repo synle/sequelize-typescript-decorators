@@ -8,7 +8,7 @@ This documents how I set up decorators and use them with sequelize (node JS ORM 
 - [X] extract plumbing into a method and reuse it instead of having user of this library do it...
 - [X] add support for other adapters: SQLITE, PG, etc...
 - [X] deploy to npm modules instead of using github
-- [ ] integrate with CI pipeline to build stuffs automatically
+- [X] integrate with CI pipeline to build stuffs automatically
 
 ### Credentials
 ```
