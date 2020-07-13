@@ -1,4 +1,4 @@
-![Build and Test](https://github.com/synle/sequelize-typescript-decorators/workflows/Build%20and%20Test/badge.svg)
+![CI Job Status](https://github.com/synle/sequelize-typescript-decorators/workflows/Package%20and%20Publish%20to%20NPM/badge.svg)
 [![npm version](https://badge.fury.io/js/sequelize-typescript-decorators.svg)](https://badge.fury.io/js/sequelize-typescript-decorators)
 
 # sequelize-typescript-decorators
