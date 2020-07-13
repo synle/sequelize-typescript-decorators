@@ -1,3 +1,6 @@
+![Build and Test](https://github.com/synle/sequelize-typescript-decorators/workflows/Build%20and%20Test/badge.svg)
+[![npm version](https://badge.fury.io/js/sequelize-typescript-decorators.svg)](https://badge.fury.io/js/sequelize-typescript-decorators)
+
 # sequelize-typescript-decorators
 This documents how I set up decorators and use them with sequelize (node JS ORM library) to reduce boilderplate
 
