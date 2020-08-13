@@ -23,6 +23,7 @@ npm install --save sequelize-typescript-decorators
 ```
 
 #### Then declare it in your model...
+##### ./models/schema.ts
 ```
 import {
   Relationship,
@@ -126,6 +127,8 @@ export class SalesforceCredential extends Model {
 #### Plumbing it up
 Note that db credentials should be stored in `DB_URL` in this format
 `DB_URL=mysql://myuser:strongpassword@127.0.0.1:3306/my_db`
+
+##### ./models/factory.ts
 ```
 import { Sequelize } from 'sequelize';
 import {
@@ -152,6 +155,27 @@ export default async () => {
 };
 ```
 
+#### How to call it?
+```
+import * as AllModelMaps from './models/schema';
+import initDatabase from './models/factory';
+
+async function _doWork(){
+  await initDatabase();
+
+  const mockUserId = 1;
+  const user = await AllModelMaps.User.findByPk(mockUserId, {
+    include: [
+      {
+        model: AllModelMaps.SalesforceCredential,
+        as: 'SalesforceCredential',
+        required: true,
+      },
+    ],
+  });
+}
+_doWork();
+```
 
 ### How to contribute?
 Create PR against master.
