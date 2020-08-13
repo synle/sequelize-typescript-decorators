@@ -19,8 +19,9 @@ DB_URL=mysql://root:StrongP@assword@127.0.0.1:3306/my_database
 
 ### How to use
 #### Install it
+To install from npm
 ```
-npm install --save sequelize-typescript-decorators
+npm install --save sequelize-typescript-decorators@^2
 ```
 
 #### Then declare it in your model...

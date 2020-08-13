@@ -5,7 +5,7 @@ export enum Relationship {
   hasOne = "hasOne",
   hasMany = "hasMany",
   belongsTo = "belongsTo",
-  belongsToMany = "belongsToMany"
+  belongsToMany = "belongsToMany",
 }
 
 export interface AttributeProperty {
@@ -34,7 +34,7 @@ export interface AssociationProperty {
  * @param tableName
  */
 export const table = (tableName: string) => {
-  return function(constructorFunction: Function) {
+  return function (constructorFunction: Function) {
     constructorFunction.prototype.dbTableName = tableName;
   };
 };
@@ -46,7 +46,7 @@ export const table = (tableName: string) => {
  */
 export const attribute = (model, fieldSchema: AttributeProperty) => {
   model.prototype.dbSchema = model.prototype.dbSchema || {};
-  return function(target: any, key: string) {
+  return function (target: any, key: string) {
     // getting the type of the property (class member)
     if (!fieldSchema.type) {
       var propertyType = Reflect.getMetadata("design:type", target, key);
@@ -78,7 +78,7 @@ export const attribute = (model, fieldSchema: AttributeProperty) => {
  */
 export const relationship = (model, tableAssociation: AssociationProperty) => {
   model.prototype.dbAssociations = model.prototype.dbAssociations || [];
-  return function(_target: any, name: string) {
+  return function (_target: any, name: string) {
     tableAssociation.sourceKey = tableAssociation.sourceKey || name;
     tableAssociation.foreignKey = tableAssociation.foreignKey || "id";
     tableAssociation.as =
@@ -97,37 +97,37 @@ export const initDatabase = async (sequelize, models: Array<any>) => {
     await sequelize.authenticate();
 
     // first create the models
-    models.forEach(sourceModel => {
+    models.forEach((sourceModel) => {
       sourceModel.init(sourceModel.prototype.dbSchema, {
         tableName: sourceModel.prototype.dbTableName,
-        sequelize // sequelize instance - this bit is important
+        sequelize, // sequelize instance - this bit is important
       });
     });
 
     // then do the association
-    models.forEach(sourceModel => {
+    models.forEach((sourceModel) => {
       // setup associations
       const associations = sourceModel.prototype.dbAssociations || [];
 
       // now here we do association
-      associations.forEach(association => {
+      associations.forEach((association) => {
         const {
           as,
           sourceKey,
           relationship,
           foreignModel,
-          foreignKey
+          foreignKey,
         } = association;
 
         // construct the relationship
         sourceModel[relationship](foreignModel, {
           sourceKey,
           foreignKey,
-          as
+          as,
         });
       });
     });
-    
+
     await sequelize.sync();
   } catch (error) {
     console.error("Unable to connect to the database:", error);

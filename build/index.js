@@ -104,6 +104,7 @@ exports.initDatabase = (sequelize, models) => __awaiter(void 0, void 0, void 0, 
                 });
             });
         });
+        yield sequelize.sync();
     }
     catch (error) {
         console.error("Unable to connect to the database:", error);
