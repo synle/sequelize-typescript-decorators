@@ -127,6 +127,8 @@ export const initDatabase = async (sequelize, models: Array<any>) => {
         });
       });
     });
+    
+    await sequelize.sync();
   } catch (error) {
     console.error("Unable to connect to the database:", error);
     process.exit(1); // exit the app if the connection failed...
