@@ -19,11 +19,7 @@ DB_URL=mysql://root:StrongP@assword@127.0.0.1:3306/my_database
 ### How to use
 #### Install it
 ```
-# To Install from npm
 npm install --save sequelize-typescript-decorators
-
-# To install from github
-npm install --save synle/sequelize-typescript-decorators#v2.0.1
 ```
 
 #### Then declare it in your model...
@@ -34,6 +30,8 @@ import {
   attribute,
   relationship,
 } from 'sequelize-typescript-decorators';
+
+import { DataTypes, Model } from 'sequelize';
 
 @table('my_user')
 export class User extends Model {
