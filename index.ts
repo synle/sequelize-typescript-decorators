@@ -83,9 +83,8 @@ export const relationship = (model, tableAssociation: AssociationProperty) => {
     tableAssociation.as =
       tableAssociation.foreignModel["as"] || tableAssociation.as;
 
-    model.prototype.dbAssociations = []
-      .concat(tableAssociation)
-      .concat(model.prototype.dbAssociations || []);
+    model.prototype.dbAssociations = model.prototype.dbAssociations || []
+    model.prototype.dbAssociations.push(tableAssociation)
   };
 };
 
