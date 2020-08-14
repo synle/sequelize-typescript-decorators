@@ -33,9 +33,12 @@ export interface AssociationProperty {
  * class decorator used to decorate the table name
  * @param tableName
  */
-export const table = (tableName: string, extraProperties: any = {
-  timestamps: true
-}) => {
+export const table = (
+  tableName: string,
+  extraProperties: any = {
+    timestamps: true,
+  }
+) => {
   return function (constructorFunction: Function) {
     constructorFunction.prototype.dbTableName = tableName;
     constructorFunction.prototype.dbExtraProperties = extraProperties;
@@ -83,11 +86,10 @@ export const relationship = (model, tableAssociation: AssociationProperty) => {
   return function (_target: any, name: string) {
     tableAssociation.sourceKey = tableAssociation.sourceKey || name;
     tableAssociation.foreignKey = tableAssociation.foreignKey || "id";
-    tableAssociation.as =
-      tableAssociation.foreignModel["as"] || tableAssociation.as;
+    tableAssociation.as = tableAssociation.foreignModel["as"];
 
-    model.prototype.dbAssociations = model.prototype.dbAssociations || []
-    model.prototype.dbAssociations.push(tableAssociation)
+    model.prototype.dbAssociations = model.prototype.dbAssociations || [];
+    model.prototype.dbAssociations.push(tableAssociation);
   };
 };
 
@@ -141,11 +143,31 @@ export const initDatabase = async (sequelize, models: Array<any>) => {
         } = association;
 
         // construct the relationship
-        sourceModel[relationship](foreignModel, {
-          sourceKey,
-          foreignKey,
-          as,
-        });
+        let relationshipDetails;
+        if (
+          [Relationship.belongsTo, Relationship.belongsToMany].indexOf(
+            relationship
+          ) >= 0
+        ) {
+          relationshipDetails = {
+            sourceKey,
+            targetKey: foreignKey,
+          };
+          if (as) {
+            relationshipDetails.through = as;
+          }
+        } else {
+          relationshipDetails = {
+            sourceKey,
+            foreignKey,
+          };
+
+          if (as) {
+            relationshipDetails.as = as;
+          }
+        }
+
+        sourceModel[relationship](foreignModel, relationshipDetails);
       });
     });
 
