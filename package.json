@@ -1,6 +1,6 @@
 {
   "name": "sequelize-typescript-decorators",
-  "version": "2.1.4",
+  "version": "2.1.7",
   "description": "Decorators that helps reduce the boilderplate code for sequelize",
   "main": "build/index",
   "scripts": {
