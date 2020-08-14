@@ -33,9 +33,12 @@ export interface AssociationProperty {
  * class decorator used to decorate the table name
  * @param tableName
  */
-export const table = (tableName: string) => {
+export const table = (tableName: string, extraProperties: any = {
+  timestamps: true
+}) => {
   return function (constructorFunction: Function) {
     constructorFunction.prototype.dbTableName = tableName;
+    constructorFunction.prototype.dbExtraProperties = extraProperties;
   };
 };
 
@@ -118,6 +121,7 @@ export const initDatabase = async (sequelize, models: Array<any>) => {
         tableName: sourceModel.prototype.dbTableName,
         indexes: sourceModel.prototype.dbIndexes,
         sequelize, // sequelize instance - this bit is important
+        ...sourceModel.prototype.dbExtraProperties,
       });
     });
 
