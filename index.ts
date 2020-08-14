@@ -77,28 +77,30 @@ export const attribute = (model, fieldSchema: AttributeProperty = {}) => {
  * @param tableAssociation AssociationProperty association properties
  */
 export const relationship = (model, tableAssociation: AssociationProperty) => {
-  model.prototype.dbAssociations = model.prototype.dbAssociations || [];
   return function (_target: any, name: string) {
     tableAssociation.sourceKey = tableAssociation.sourceKey || name;
     tableAssociation.foreignKey = tableAssociation.foreignKey || "id";
     tableAssociation.as =
       tableAssociation.foreignModel["as"] || tableAssociation.as;
-    model.prototype.dbAssociations.push(tableAssociation);
+
+    model.prototype.dbAssociations = []
+      .concat(tableAssociation)
+      .concat(model.prototype.dbAssociations || []);
   };
 };
-
 
 /**
  * class decorator used to set up indexes. Refer to https://sequelize.org/master/manual/indexes.html
  * for details...
  *
  * @param model sequelize.Model
- * @param newIndex
+ * @param newIndexes
  */
-export const index = (model, newIndex: any) => {
-  model.prototype.dbIndexes = model.prototype.dbIndexes || [];
-  return function (_constructorFunction: Function) {
-    model.prototype.dbIndexes.push(newIndex);
+export const index = (newIndexes) => {
+  return function (constructorFunction: Function) {
+    constructorFunction.prototype.dbIndexes = []
+      .concat(newIndexes)
+      .concat(constructorFunction.prototype.dbIndexes || []);
   };
 };
 
