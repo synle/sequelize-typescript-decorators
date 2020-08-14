@@ -1,5 +1,5 @@
 import "reflect-metadata"; // library which adds a polyfill for an experimental metadata API, and requirement for some js decorators
-import { DataTypes, DataType } from "sequelize";
+import { DataTypes, DataType, ModelIndexesOptions } from "sequelize";
 
 export enum Relationship {
   hasOne = "hasOne",
@@ -44,7 +44,7 @@ export const table = (tableName: string) => {
  * @param model sequelize.Model
  * @param fieldSchema table attributes
  */
-export const attribute = (model, fieldSchema: AttributeProperty) => {
+export const attribute = (model, fieldSchema: AttributeProperty = {}) => {
   model.prototype.dbSchema = model.prototype.dbSchema || {};
   return function (target: any, key: string) {
     // getting the type of the property (class member)
@@ -87,6 +87,21 @@ export const relationship = (model, tableAssociation: AssociationProperty) => {
   };
 };
 
+
+/**
+ * class decorator used to set up indexes. Refer to https://sequelize.org/master/manual/indexes.html
+ * for details...
+ *
+ * @param model sequelize.Model
+ * @param newIndex
+ */
+export const index = (model, newIndex: any) => {
+  model.prototype.dbIndexes = model.prototype.dbIndexes || [];
+  return function (_constructorFunction: Function) {
+    model.prototype.dbIndexes.push(newIndex);
+  };
+};
+
 /**
  *
  * @param sequelize connected sequelize instance
@@ -100,6 +115,7 @@ export const initDatabase = async (sequelize, models: Array<any>) => {
     models.forEach((sourceModel) => {
       sourceModel.init(sourceModel.prototype.dbSchema, {
         tableName: sourceModel.prototype.dbTableName,
+        indexes: sourceModel.prototype.dbIndexes,
         sequelize, // sequelize instance - this bit is important
       });
     });
