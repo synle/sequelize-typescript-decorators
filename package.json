@@ -1,11 +1,11 @@
 {
   "name": "sequelize-typescript-decorators",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "Decorators that helps reduce the boilderplate code for sequelize",
   "main": "build/index",
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
-    "format": "npx prettier --write **/*.ts",
+    "build": "tsc",
+    "format": "prettier --write **/*.ts *.md",
     "test": "echo \"Error: no test specified\""
   },
   "repository": {

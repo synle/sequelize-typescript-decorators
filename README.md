@@ -2,188 +2,209 @@
 [![npm version](https://badge.fury.io/js/sequelize-typescript-decorators.svg)](https://badge.fury.io/js/sequelize-typescript-decorators)
 
 # sequelize-typescript-decorators
+
 This documents how I set up decorators and use them with sequelize (node JS ORM library) to reduce boilderplate
 
 ### TODO's
-- [X] extract plumbing into a method and reuse it instead of having user of this library do it...
-- [X] add support for other adapters: SQLITE, PG, etc...
-- [X] deploy to npm modules instead of using github
-- [X] integrate with CI pipeline to build stuffs automatically
-- [ ] add docs
+
+- [x] extract plumbing into a method and reuse it instead of having user of this library do it...
+- [x] add support for other adapters: SQLITE, PG, etc...
+- [x] deploy to npm modules instead of using github
+- [x] integrate with CI pipeline to build stuffs automatically
+- [x] add docs
 - [ ] add unit tests
 
 ### Credentials
+
 ```
 DB_URL=mysql://root:StrongP@assword@127.0.0.1:3306/my_database
 ```
 
-
 ### How to use
+
 #### Install it
+
 To install from npm
+
 ```
 npm install --save sequelize-typescript-decorators@^2
+
+# based on your database engine, you will need to include different things
 ```
 
 #### Then declare it in your model...
+
+In our example, Email can have one or many attachments. Keep that in mind for relationship
+
 ##### ./models/schema.ts
+
 ```
 import {
   Relationship,
   table,
   attribute,
   relationship,
-} from 'sequelize-typescript-decorators';
+  index,
+} from "sequelize-typescript-decorators";
 
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes, Model } from "sequelize";
 
-@table('my_user')
-export class User extends Model {
-  static as = 'User';
-
-  @attribute(User, {
+@table("attachments", {
+  timestamps: false,
+})
+@index([
+  {
+    unique: false,
+    fields: ["messageId"],
+  },
+  {
+    unique: false,
+    fields: ["fileName"],
+  },
+])
+export class Attachment extends Model {
+  @attribute(Attachment, {
     allowNull: false,
     primaryKey: true,
-    autoIncrement: true,
   })
-  public id!: number;
+  public id!: string;
 
-  @attribute(User, { allowNull: false })
-  public password!: string;
+  @attribute(Attachment, { allowNull: false })
+  public messageId!: string;
 
-  @attribute(User, { allowNull: false })
-  public last_login!: Date;
+  @attribute(Attachment, { allowNull: false })
+  public mimeType!: string;
 
-  @attribute(User, { unique: true, allowNull: false })
-  public email!: string;
+  @attribute(Attachment, { allowNull: false })
+  public fileName!: string;
 
-  @attribute(User, {})
-  public is_active!: boolean;
-
-  @attribute(User, {})
-  public is_canceled!: boolean;
-
-  @attribute(User, {})
-  public is_admin!: boolean;
+  @attribute(Attachment, { allowNull: false })
+  public path!: string;
 }
 
-@table('salesforcecredentials')
-export class SalesforceCredential extends Model {
-  static as = 'SalesforceCredential';
-
-  @attribute(SalesforceCredential, {
+@table("emails", {
+  timestamps: false,
+})
+@index([
+  {
+    unique: false,
+    fields: ["threadId"],
+  },
+  {
+    unique: false,
+    fields: ["from"],
+  },
+])
+export class Email extends Model {
+  @attribute(Email, {
     allowNull: false,
     primaryKey: true,
-    autoIncrement: true,
   })
-  public id!: number;
+  public id!: string;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public sf_id!: string;
+  @attribute(Email, { allowNull: false })
+  public threadId!: string;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public issued_at!: string;
+  @attribute(Email, { allowNull: false })
+  public from!: string;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public scope!: string;
+  @attribute(Email)
+  public to!: string;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public instance_url!: string;
+  @attribute(Email)
+  public bcc!: string;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public refresh_token!: string;
+  @attribute(Email, { type: DataTypes.TEXT })
+  public body!: string;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public signature!: string;
+  @attribute(Email, { type: DataTypes.TEXT })
+  public rawBody!: string;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public access_token!: string;
+  @attribute(Email)
+  public subject!: string;
 
-  @attribute(SalesforceCredential, {})
-  public has_rest_api_access!: boolean;
+  @attribute(Email)
+  public date!: number;
 
-  @attribute(SalesforceCredential, { allowNull: false })
-  public sf_username!: string;
+  @attribute(Email)
+  public headers!: string;
 
-  @attribute(SalesforceCredential, {})
-  public sf_bcc_address!: string;
-
-  @attribute(SalesforceCredential, { allowNull: false })
-  public initial_touch_status!: string;
-
-  @attribute(SalesforceCredential, {})
-  public task_type!: string;
-
-  @attribute(SalesforceCredential, { allowNull: false })
-  @relationship(SalesforceCredential, {
-    relationship: Relationship.hasOne,
-    foreignModel: User,
+  @relationship(Email, {
+    relationship: Relationship.hasMany,
+    sourceKey: "id",
+    foreignModel: Attachment,
+    foreignKey: "messageId",
+    as: "attachments",
   })
-  public user_id!: number;
-
-  // with association getter
-  public readonly User?: User; // this is optional and only visible with includes
+  public Attachments!: any[];
 }
+
+export default {
+  Attachment,
+  Email,
+};
 ```
 
-
-#### Plumbing it up
-Note that db credentials should be stored in `DB_URL` in this format
-`DB_URL=mysql://myuser:strongpassword@127.0.0.1:3306/my_db`
-
 ##### ./models/factory.ts
+
 ```
 import { Sequelize } from 'sequelize';
 import {
   initDatabase,
 } from 'sequelize-typescript-decorators';
-import * as AllModelMaps from './schema';
+import Models from "./schema";
 
 /**
  * this routine will initialize the database, please only run this once per all...
  */
 export default async () => {
-  const dbConnectionString = process.env.DB_URL || '';
-  const sequelize = new Sequelize(dbConnectionString, {
-    logging: false, // disable it for debugging
-    define: {
-      // Enforcing the table name to be equal to the model name
-      freezeTableName: true,
-      timestamps: false, // disable auto create createdAt and updatedAt
-    },
+  // this is an example to connect to sqlite3
+  // set up your connection accordingly
+  const dbConnectionString = process.env.DB_URL || "";
+  const sequelize = new Sequelize("note_synchronize", "username", "password", {
+    dialect: "sqlite",
+    storage: dbConnectionString,
+    logging: false,
   });
 
-  const models = Object.keys(AllModelMaps).map((modelName) => AllModelMaps[modelName]);
-  await(initDatabase(sequelize, models))
+  const models = Object.keys(Models).map((modelName) => Models[modelName]);
+
+  await initDatabase(sequelize, models);
 };
 ```
 
-#### How to call it?
+#### How to call and use it?
+
+Somewhere in your entry code, runs and wait for the init
+
 ```
-import * as AllModelMaps from './models/schema';
-import initDatabase from './models/factory';
+import initDatabase from "./src/models/factory";
+import Models from "./src/models/schema";
 
 async function _doWork(){
   await initDatabase();
 
-  const mockUserId = 1;
-  const user = await AllModelMaps.User.findByPk(mockUserId, {
+  // start your work here
+  // get list of emails and associated attachments...
+  const matchedEmailsResponse = await Models.Email.findAll({
     include: [
       {
-        model: AllModelMaps.SalesforceCredential,
-        as: 'SalesforceCredential',
-        required: true,
+        model: Models.Attachment,
+        required: false,
       },
     ],
   });
 }
+
 _doWork();
 ```
 
 ### How to contribute?
+
 Create PR against master.
 
 #### Note on release pipeline
+
 ```
 version="$(cat package.json  | jq .version)"
 git tag $version
