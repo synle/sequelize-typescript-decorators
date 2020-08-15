@@ -1,5 +1,5 @@
 import "reflect-metadata"; // library which adds a polyfill for an experimental metadata API, and requirement for some js decorators
-import { DataTypes, DataType, ModelIndexesOptions } from "sequelize";
+import { DataTypes, DataType } from "sequelize";
 
 export enum Relationship {
   hasOne = "hasOne",
@@ -29,6 +29,7 @@ export interface AssociationProperty {
 
 // decorators: more notes can be found here: https://codeburst.io/decorate-your-code-with-typescript-decorators-5be4a4ffecb4
 // https://www.typescriptlang.org/docs/handbook/decorators.html
+
 /**
  * class decorator used to decorate the table name
  * @param tableName
@@ -47,11 +48,9 @@ export const table = (
 
 /**
  * used to define field schema
- * @param model sequelize.Model
  * @param fieldSchema table attributes
  */
-export const attribute = (model, fieldSchema: AttributeProperty = {}) => {
-  model.prototype.dbSchema = model.prototype.dbSchema || {};
+export const attribute = (fieldSchema: AttributeProperty = {}) => {
   return function (target: any, key: string) {
     // getting the type of the property (class member)
     if (!fieldSchema.type) {
@@ -73,23 +72,23 @@ export const attribute = (model, fieldSchema: AttributeProperty = {}) => {
     }
 
     // set the dbschema
-    model.prototype.dbSchema[key] = fieldSchema;
+    target.prototype.dbSchema = target.prototype.dbSchema || {};
+    target.prototype.dbSchema[key] = fieldSchema;
   };
 };
 
 /**
  * used to annotate relationship between tables
- * @param model sequelize.Model
  * @param tableAssociation AssociationProperty association properties
  */
-export const relationship = (model, tableAssociation: AssociationProperty) => {
-  return function (_target: any, name: string) {
+export const relationship = (tableAssociation: AssociationProperty) => {
+  return function (target: any, name: string) {
     tableAssociation.sourceKey = tableAssociation.sourceKey || name;
     tableAssociation.foreignKey = tableAssociation.foreignKey || "id";
     tableAssociation.as = tableAssociation.foreignModel["as"];
 
-    model.prototype.dbAssociations = model.prototype.dbAssociations || [];
-    model.prototype.dbAssociations.push(tableAssociation);
+    target.prototype.dbAssociations = target.prototype.dbAssociations || [];
+    target.prototype.dbAssociations.push(tableAssociation);
   };
 };
 
@@ -97,7 +96,6 @@ export const relationship = (model, tableAssociation: AssociationProperty) => {
  * class decorator used to set up indexes. Refer to https://sequelize.org/master/manual/indexes.html
  * for details...
  *
- * @param model sequelize.Model
  * @param newIndexes
  */
 export const index = (newIndexes) => {
